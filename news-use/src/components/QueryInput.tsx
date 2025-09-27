@@ -87,10 +87,16 @@ export function QueryInput() {
           <textarea
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !isLoading && query.trim()) {
+                e.preventDefault();
+                handleSubmit(e as any);
+              }
+            }}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
             placeholder="What do you want to stay informed about?"
-            className="w-full px-6 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500
+            className="w-full px-6 py-4 pr-16 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500
                      focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
                      transition-all duration-300 resize-none min-h-[120px]
                      hover:border-zinc-700 relative z-10"
@@ -104,13 +110,36 @@ export function QueryInput() {
             }}
             disabled={isLoading}
           />
+          <button
+            type="submit"
+            disabled={isLoading || !query.trim()}
+            className={`absolute bottom-3 right-3 p-1.5 rounded-full transition-all duration-200 z-20
+                     ${query.trim() && !isLoading
+                       ? 'bg-orange-500 hover:bg-orange-600 text-white border border-orange-500 hover:border-orange-600'
+                       : 'bg-zinc-800 text-zinc-400 border border-zinc-700 disabled:opacity-30 disabled:text-zinc-600'}`}
+          >
+            {isLoading ? (
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+              </svg>
+            )}
+          </button>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 px-2">
           <div className="flex items-center space-x-3">
             <button
               type="button"
-              onClick={() => setIncludeInDatabase(!includeInDatabase)}
+              onClick={() => {
+                setIncludeInDatabase(!includeInDatabase)
+                setShowNameInput(!showNameInput)
+              }
+            }
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
                 includeInDatabase ? 'bg-orange-500' : 'bg-zinc-700'
               }`}
@@ -121,25 +150,9 @@ export function QueryInput() {
                 }`}
               />
             </button>
-            <label className="text-sm text-zinc-400">Include in public feed</label>
+            <label className="text-sm text-zinc-400">Share</label>
           </div>
 
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={() => setShowNameInput(!showNameInput)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
-                showNameInput ? 'bg-orange-500' : 'bg-zinc-700'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
-                  showNameInput ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
-            <label className="text-sm text-zinc-400">Add your name</label>
-          </div>
 
           {showNameInput && (
             <input
@@ -147,32 +160,13 @@ export function QueryInput() {
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="Enter your name"
-              className="flex-1 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500
+              className="w-48 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500
                        focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
                        transition-all duration-200 text-sm"
             />
           )}
         </div>
       </div>
-      <button
-        type="submit"
-        disabled={isLoading || !query.trim()}
-        className="mt-4 w-full md:w-auto px-8 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium
-                 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed
-                 transform hover:scale-105 active:scale-95 shadow-lg shadow-orange-500/20 hover:shadow-xl hover:shadow-orange-500/30"
-      >
-        {isLoading ? (
-          <span className="flex items-center space-x-2">
-            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            <span>Creating newspaper...</span>
-          </span>
-        ) : (
-          "Create Newspaper"
-        )}
-      </button>
     </form>
 
     {createdNewspaperId && (
