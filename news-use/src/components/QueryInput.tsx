@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
+import { Id } from "../../convex/_generated/dataModel";
+import { NewspaperDetail } from "./NewspaperDetail";
 
 export function QueryInput() {
   const [query, setQuery] = useState("");
@@ -10,6 +12,7 @@ export function QueryInput() {
   const [includeInDatabase, setIncludeInDatabase] = useState(true);
   const [showNameInput, setShowNameInput] = useState(false);
   const [userName, setUserName] = useState("");
+  const [createdNewspaperId, setCreatedNewspaperId] = useState<Id<"created_newspapers"> | null>(null);
   const inputRef = useRef<HTMLDivElement>(null);
   const createNewspaper = useMutation(api.newspapers.createNewspaper);
 
@@ -48,10 +51,11 @@ export function QueryInput() {
       headlines: headlines,
       userName: showNameInput && userName.trim() ? userName.trim() : undefined,
       isPublic: includeInDatabase
-    }).then(() => {
+    }).then((newspaperId) => {
       setQuery("");
       setUserName("");
       setIsLoading(false);
+      setCreatedNewspaperId(newspaperId);
     }).catch((error) => {
       console.error("Failed to create newspaper:", error);
       setIsLoading(false);
@@ -67,8 +71,13 @@ export function QueryInput() {
     }
   };
 
+  const handleCloseNewspaper = () => {
+    setCreatedNewspaperId(null);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto mb-16">
+    <>
+      <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto mb-16">
       <div className="space-y-4">
         <div
           ref={inputRef}
@@ -165,5 +174,13 @@ export function QueryInput() {
         )}
       </button>
     </form>
+
+    {createdNewspaperId && (
+      <NewspaperDetail
+        newspaperId={createdNewspaperId}
+        onClose={handleCloseNewspaper}
+      />
+    )}
+    </>
   );
 }
