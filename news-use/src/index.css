@@ -1,22 +1,90 @@
 @import "tailwindcss";
 
-@theme {
-  --color-light: #ffffff;
-  --color-dark: #171717;
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: dark;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    color: var(--color-light);
-    background: var(--color-dark);
-    font-family: Arial, Helvetica, sans-serif;
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background-color: #0a0a0a;
+  color: #ffffff;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+#root {
+  width: 100%;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 
-@media (prefers-color-scheme: light) {
-  body {
-    color: var(--color-dark);
-    background: var(--color-light);
-    font-family: Arial, Helvetica, sans-serif;
+@keyframes fade-in-delay {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
   }
+  50% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-fade-in-delay {
+  animation: fade-in-delay 1s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.4s ease-out;
+  animation-fill-mode: both;
+}
+
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
