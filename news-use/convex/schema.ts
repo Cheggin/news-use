@@ -8,5 +8,7 @@ export default defineSchema({
     articleCount: v.number(),
     headlines: v.array(v.string()),
     createdAt: v.number(),
+    userName: v.optional(v.string()),
+    isPublic: v.boolean(),
   }).index("by_created_at", ["createdAt"]),
 });

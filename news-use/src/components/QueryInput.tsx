@@ -7,6 +7,9 @@ export function QueryInput() {
   const [isLoading, setIsLoading] = useState(false);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isFocused, setIsFocused] = useState(false);
+  const [includeInDatabase, setIncludeInDatabase] = useState(true);
+  const [showNameInput, setShowNameInput] = useState(false);
+  const [userName, setUserName] = useState("");
   const inputRef = useRef<HTMLDivElement>(null);
   const createNewspaper = useMutation(api.newspapers.createNewspaper);
 
@@ -42,9 +45,12 @@ export function QueryInput() {
       query: query,
       newspapers: mockArticles,
       articleCount: 3,
-      headlines: headlines
+      headlines: headlines,
+      userName: showNameInput && userName.trim() ? userName.trim() : undefined,
+      isPublic: includeInDatabase
     }).then(() => {
       setQuery("");
+      setUserName("");
       setIsLoading(false);
     }).catch((error) => {
       console.error("Failed to create newspaper:", error);
@@ -63,31 +69,81 @@ export function QueryInput() {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto mb-16">
-      <div
-        ref={inputRef}
-        className="relative rounded-xl"
-        onMouseMove={handleMouseMove}
-      >
-        <textarea
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          placeholder="What do you want to stay informed about?"
-          className="w-full px-6 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500
-                   focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
-                   transition-all duration-300 resize-none min-h-[120px]
-                   hover:border-zinc-700 relative z-10"
-          style={{
-            background: isFocused && mousePosition.x > 0 ? `
-              radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px,
-                rgba(255, 107, 53, 0.06),
-                transparent 40%),
-              rgb(24, 24, 27)
-            ` : 'rgb(24, 24, 27)'
-          }}
-          disabled={isLoading}
-        />
+      <div className="space-y-4">
+        <div
+          ref={inputRef}
+          className="relative rounded-xl"
+          onMouseMove={handleMouseMove}
+        >
+          <textarea
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            placeholder="What do you want to stay informed about?"
+            className="w-full px-6 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500
+                     focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20
+                     transition-all duration-300 resize-none min-h-[120px]
+                     hover:border-zinc-700 relative z-10"
+            style={{
+              background: isFocused && mousePosition.x > 0 ? `
+                radial-gradient(600px circle at ${mousePosition.x}px ${mousePosition.y}px,
+                  rgba(255, 107, 53, 0.06),
+                  transparent 40%),
+                rgb(24, 24, 27)
+              ` : 'rgb(24, 24, 27)'
+            }}
+            disabled={isLoading}
+          />
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 px-2">
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setIncludeInDatabase(!includeInDatabase)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+                includeInDatabase ? 'bg-orange-500' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  includeInDatabase ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <label className="text-sm text-zinc-400">Include in public feed</label>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <button
+              type="button"
+              onClick={() => setShowNameInput(!showNameInput)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+                showNameInput ? 'bg-orange-500' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  showNameInput ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+            <label className="text-sm text-zinc-400">Add your name</label>
+          </div>
+
+          {showNameInput && (
+            <input
+              type="text"
+              value={userName}
+              onChange={(e) => setUserName(e.target.value)}
+              placeholder="Enter your name"
+              className="flex-1 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500
+                       focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
+                       transition-all duration-200 text-sm"
+            />
+          )}
+        </div>
       </div>
       <button
         type="submit"

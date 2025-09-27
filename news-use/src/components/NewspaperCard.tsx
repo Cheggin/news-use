@@ -27,6 +27,12 @@ export function NewspaperCard({ newspaper, onClick }: NewspaperCardProps) {
           <div className="flex items-center space-x-2 mb-2">
             <span className="text-xs text-orange-500 font-medium">NEW</span>
             <span className="text-xs text-zinc-500">{getRelativeTime(newspaper.createdAt)}</span>
+            {newspaper.userName && (
+              <>
+                <span className="text-xs text-zinc-600">•</span>
+                <span className="text-xs text-zinc-400">by {newspaper.userName}</span>
+              </>
+            )}
           </div>
           <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-orange-500 transition-colors">
             {newspaper.query}

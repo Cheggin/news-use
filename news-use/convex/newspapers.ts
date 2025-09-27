@@ -7,6 +7,8 @@ export const createNewspaper = mutation({
     newspapers: v.any(),
     articleCount: v.number(),
     headlines: v.array(v.string()),
+    userName: v.optional(v.string()),
+    isPublic: v.boolean(),
   },
   handler: async (ctx, args) => {
     const newspaper = await ctx.db.insert("created_newspapers", {
@@ -15,6 +17,8 @@ export const createNewspaper = mutation({
       articleCount: args.articleCount,
       headlines: args.headlines,
       createdAt: Date.now(),
+      userName: args.userName,
+      isPublic: args.isPublic,
     });
     return newspaper;
   },
@@ -30,6 +34,7 @@ export const listNewspapers = query({
       .query("created_newspapers")
       .withIndex("by_created_at")
       .order("desc")
+      .filter((q) => q.eq(q.field("isPublic"), true))
       .take(limit);
     return newspapers;
   },
