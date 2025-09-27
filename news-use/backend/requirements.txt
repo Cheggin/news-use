@@ -1,0 +1,94 @@
+# Core Dependencies
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+python-dotenv==1.0.0
+
+# Browser Use and Web Scraping
+browser-use==0.1.0  # Replace with actual version when available
+playwright==1.41.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+httpx==0.26.0
+selenium==4.17.0  # Alternative to playwright if needed
+
+# AI/ML Models Integration
+openai==1.10.0
+anthropic==0.14.0
+google-generativeai==0.3.2
+langchain==0.1.4
+tiktoken==0.5.2
+
+# Async Support
+aiohttp==3.9.1
+asyncio==3.4.3
+aiofiles==23.2.1
+
+# Data Processing
+pandas==2.1.4
+numpy==1.26.3
+python-dateutil==2.8.2
+
+# Caching and Performance
+redis==5.0.1
+aiocache==0.12.2
+cachetools==5.3.2
+
+# Database (optional, for production)
+sqlalchemy==2.0.25
+asyncpg==0.29.0  # For PostgreSQL
+motor==3.3.2  # For MongoDB
+
+# API Documentation and Validation
+python-multipart==0.0.6
+email-validator==2.1.0
+python-jose[cryptography]==3.3.0
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+pytest-cov==4.1.0
+httpx==0.26.0  # For testing HTTP clients
+faker==22.2.0
+
+# Monitoring and Logging
+loguru==0.7.2
+sentry-sdk==1.39.2
+prometheus-client==0.19.0
+
+# Development Tools
+black==23.12.1
+flake8==7.0.0
+mypy==1.8.0
+pre-commit==3.6.0
+ipython==8.20.0
+rich==13.7.0  # For better console output
+
+# Security
+passlib==1.7.4
+bcrypt==4.1.2
+cryptography==41.0.7
+
+# Rate Limiting
+slowapi==0.1.9
+limits==3.7.0
+
+# Task Queue (for background jobs)
+celery==5.3.6
+redis==5.0.1  # Redis as broker
+flower==2.0.1  # Celery monitoring
+
+# WebSocket Support
+websockets==12.0
+python-socketio==5.11.0
+
+# Environment and Configuration
+pyyaml==6.0.1
+toml==0.10.2
+configparser==6.0.0
+
+# Utilities
+tqdm==4.66.1  # Progress bars
+humanize==4.9.0  # Human-readable formats
+pytz==2023.4
+pendulum==3.0.0  # Better datetime handling

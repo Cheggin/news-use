@@ -3,10 +3,6 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 
-interface Article {
-  link: string;
-  content: string;
-}
 
 interface NewspaperDetailProps {
   newspaperId: Id<"created_newspapers">;
@@ -33,7 +29,7 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
     });
   };
 
-  const articles = Object.entries(newspaper.newspapers || {}) as [string, Article][];
+  const articles = Object.entries(newspaper.newspapers || {});
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
