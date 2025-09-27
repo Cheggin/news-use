@@ -1,8 +1,16 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { NewspaperDetail } from "./NewspaperDetail";
+
+type ModelOption = "gemini-flash-3.0" | "gpt-4.1" | "gemini-flash-2.5";
+
+const models = [
+  { id: "gemini-flash-3.0" as ModelOption, name: "Gemini Flash 3.0" },
+  { id: "gpt-4.1" as ModelOption, name: "GPT 4.1" },
+  { id: "gemini-flash-2.5" as ModelOption, name: "Gemini Flash 2.5" },
+];
 
 export function QueryInput() {
   const [query, setQuery] = useState("");
@@ -12,9 +20,25 @@ export function QueryInput() {
   const [includeInDatabase, setIncludeInDatabase] = useState(true);
   const [showNameInput, setShowNameInput] = useState(false);
   const [userName, setUserName] = useState("");
+  const [selectedModel, setSelectedModel] = useState<ModelOption>("gemini-flash-3.0");
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [createdNewspaperId, setCreatedNewspaperId] = useState<Id<"created_newspapers"> | null>(null);
   const inputRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const createNewspaper = useMutation(api.newspapers.createNewspaper);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowModelDropdown(false);
+      }
+    };
+
+    if (showModelDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showModelDropdown]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,25 +134,71 @@ export function QueryInput() {
             }}
             disabled={isLoading}
           />
-          <button
-            type="submit"
-            disabled={isLoading || !query.trim()}
-            className={`absolute bottom-3 right-3 p-1.5 rounded-full transition-all duration-200 z-20
-                     ${query.trim() && !isLoading
-                       ? 'bg-orange-500 hover:bg-orange-600 text-white border border-orange-500 hover:border-orange-600'
-                       : 'bg-zinc-800 text-zinc-400 border border-zinc-700 disabled:opacity-30 disabled:text-zinc-600'}`}
-          >
-            {isLoading ? (
-              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-              </svg>
-            ) : (
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            )}
-          </button>
+
+          <div className="absolute bottom-3 right-3 flex items-center space-x-2 z-20">
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setShowModelDropdown(!showModelDropdown)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium
+                         transition-all duration-200 flex items-center space-x-1.5
+                         ${query.trim()
+                           ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white'
+                           : 'text-zinc-600 opacity-50'}`}
+              >
+                <span className="truncate">{models.find(m => m.id === selectedModel)?.name}</span>
+                <svg className={`h-3 w-3 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                </svg>
+              </button>
+
+              {showModelDropdown && (
+                <div className="absolute bottom-full mb-2 right-0 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden">
+                  {models.map(model => (
+                    <button
+                      key={model.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedModel(model.id);
+                        setShowModelDropdown(false);
+                      }}
+                      className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between transition-colors
+                               ${selectedModel === model.id
+                                 ? 'bg-orange-500/10 text-orange-500'
+                                 : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                    >
+                      <span>{model.name}</span>
+                      {selectedModel === model.id && (
+                        <svg className="ml-auto h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading || !query.trim()}
+              className={`p-1.5 rounded-full transition-all duration-200
+                       ${query.trim() && !isLoading
+                         ? 'bg-orange-500 hover:bg-orange-600 text-white border border-orange-500 hover:border-orange-600'
+                         : 'bg-zinc-800 text-zinc-400 border border-zinc-700 disabled:opacity-30 disabled:text-zinc-600'}`}
+            >
+              {isLoading ? (
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 px-2">
