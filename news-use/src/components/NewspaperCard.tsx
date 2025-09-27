@@ -34,7 +34,7 @@ export function NewspaperCard({ newspaper, onClick }: NewspaperCardProps) {
               </>
             )}
           </div>
-          <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2 group-hover:text-orange-500 transition-colors">
+          <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
             {newspaper.query}
           </h3>
           <p className="text-sm text-zinc-400">
@@ -56,7 +56,7 @@ export function NewspaperCard({ newspaper, onClick }: NewspaperCardProps) {
       </div>
 
       <button className="w-full py-2 px-4 bg-zinc-800 hover:bg-zinc-700 text-white text-sm font-medium
-                       rounded-lg transition-colors duration-300 group-hover:bg-orange-500/10 group-hover:text-orange-500">
+                       rounded-lg transition-colors duration-300">
         View Newspaper →
       </button>
     </div>
