@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import ReactMarkdown from "react-markdown";
+import type { Components } from "react-markdown";
 
 interface Article {
   link: string;
@@ -137,6 +138,60 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
   const summaryEntry = allArticles.find(([key]) => key.includes("summary"));
   const sourceArticles = allArticles.filter(([key]) => !key.includes("summary"));
 
+  // Helper function to recursively process children and highlight article references
+  const processChildren = (children: any): any => {
+    if (typeof children === 'string') {
+      const articlePattern = /\(Article \d+\)|Article \d+|Articles? \d+(?:\s*&\s*\d+)?/g;
+      if (articlePattern.test(children)) {
+        const parts = children.split(/(\(Article \d+\)|Article \d+|Articles? \d+(?:\s*&\s*\d+)?)/g);
+        return parts.map((part, i) => {
+          if (/\(Article \d+\)|Article \d+|Articles? \d+(?:\s*&\s*\d+)?/.test(part)) {
+            return (
+              <span key={i} className="text-orange-500 font-semibold">
+                {part}
+              </span>
+            );
+          }
+          return part;
+        });
+      }
+      return children;
+    }
+
+    if (Array.isArray(children)) {
+      return children.map((child, i) => processChildren(child));
+    }
+
+    // Handle React elements (like <strong>, <em>, etc.)
+    if (children && typeof children === 'object' && children.props) {
+      return children;
+    }
+
+    return children;
+  };
+
+  // Custom markdown components to highlight article references
+  const markdownComponents: Components = {
+    p: ({ children }) => {
+      return <p>{processChildren(children)}</p>;
+    },
+    li: ({ children }) => {
+      return <li>{processChildren(children)}</li>;
+    },
+    strong: ({ children }) => {
+      return <strong>{processChildren(children)}</strong>;
+    },
+    em: ({ children }) => {
+      return <em>{processChildren(children)}</em>;
+    },
+    h3: ({ children }) => {
+      return <h3>{processChildren(children)}</h3>;
+    },
+    h4: ({ children }) => {
+      return <h4>{processChildren(children)}</h4>;
+    },
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in">
       <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -214,7 +269,7 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
                                             prose-blockquote:my-5 prose-blockquote:border-l-orange-500
                                             prose-a:text-orange-500 prose-a:no-underline hover:prose-a:text-orange-400
                                             [&>*]:mb-5 [&>*:last-child]:mb-0">
-                                <ReactMarkdown>{section.content}</ReactMarkdown>
+                                <ReactMarkdown components={markdownComponents}>{section.content}</ReactMarkdown>
                               </div>
                             </div>
                           )}

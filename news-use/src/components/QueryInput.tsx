@@ -5,12 +5,12 @@ import { Id } from "../../convex/_generated/dataModel";
 import { NewspaperDetail } from "./NewspaperDetail";
 import { searchNYT, searchWashPost, summarizeArticles, type Article } from "../lib/api";
 
-type ModelOption = "gemini-flash-3.0" | "gpt-4.1" | "gemini-flash-2.5";
+type ModelOption = "gemini-flash-latest" | "gpt-4.1" | "gemini-flash-2.5";
 
 const models = [
-  { id: "gemini-flash-3.0" as ModelOption, name: "Gemini Flash 3.0" },
-  { id: "gpt-4.1" as ModelOption, name: "GPT 4.1" },
-  { id: "gemini-flash-2.5" as ModelOption, name: "Gemini Flash 2.5" },
+  { id: "gemini-flash-latest" as ModelOption, name: "Gemini Flash Latest", available: true },
+  { id: "gpt-4.1" as ModelOption, name: "GPT 4.1", available: false },
+  { id: "gemini-flash-2.5" as ModelOption, name: "Gemini Flash 2.5", available: false },
 ];
 
 export function QueryInput() {
@@ -21,9 +21,12 @@ export function QueryInput() {
   const [includeInDatabase, setIncludeInDatabase] = useState(true);
   const [showNameInput, setShowNameInput] = useState(true);
   const [userName, setUserName] = useState("");
-  const [selectedModel, setSelectedModel] = useState<ModelOption>("gemini-flash-3.0");
+  const [selectedModel, setSelectedModel] = useState<ModelOption>("gemini-flash-latest");
   const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [createdNewspaperId, setCreatedNewspaperId] = useState<Id<"created_newspapers"> | null>(null);
+  const [loadingStatus, setLoadingStatus] = useState<string>("");
+  const [buildingArticles, setBuildingArticles] = useState<Article[]>([]);
+  const [buildingSummary, setBuildingSummary] = useState<string>("");
   const inputRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const createNewspaper = useMutation(api.newspapers.createNewspaper);
@@ -46,25 +49,34 @@ export function QueryInput() {
     if (!query.trim()) return;
 
     setIsLoading(true);
+    setBuildingArticles([]);
+    setBuildingSummary("");
+    setLoadingStatus("Searching New York Times...");
 
     try {
-      // Call both news APIs in parallel
-      const [nytResponse, washPostResponse] = await Promise.all([
-        searchNYT(query),
-        searchWashPost(query)
-      ]);
+      // Call NYT first, show results immediately
+      const nytResponse = await searchNYT(query);
+      setBuildingArticles([...nytResponse.articles]);
 
-      // Combine all articles
+      setLoadingStatus("Searching Washington Post...");
+
+      // Then call WashPost, add to existing articles
+      const washPostResponse = await searchWashPost(query);
       const allArticles: Article[] = [
         ...nytResponse.articles,
         ...washPostResponse.articles
       ];
+      setBuildingArticles(allArticles);
 
       if (allArticles.length === 0) {
         alert("No articles found. Please try a different query.");
         setIsLoading(false);
+        setLoadingStatus("");
+        setBuildingArticles([]);
         return;
       }
+
+      setLoadingStatus(`Analyzing ${allArticles.length} articles with AI...`);
 
       // Summarize all articles
       const summaryResponse = await summarizeArticles(allArticles);
@@ -72,6 +84,10 @@ export function QueryInput() {
       if (!summaryResponse.success) {
         throw new Error(summaryResponse.error || "Failed to summarize articles");
       }
+
+      // Show the summary as it's generated
+      setBuildingSummary(summaryResponse.summary);
+      setLoadingStatus("Saving to database...");
 
       // Format the articles into the newspaper structure
       const newspapers: Record<string, { link: string; content: string; headline?: string }> = {};
@@ -95,6 +111,8 @@ export function QueryInput() {
         headlines.push(article.headline);
       });
 
+      setLoadingStatus("Creating your newspaper...");
+
       // Create newspaper in Convex
       const newspaperId = await createNewspaper({
         query: query,
@@ -113,6 +131,9 @@ export function QueryInput() {
       alert(`Error: ${error instanceof Error ? error.message : "Failed to fetch articles"}`);
     } finally {
       setIsLoading(false);
+      setLoadingStatus("");
+      setBuildingArticles([]);
+      setBuildingSummary("");
     }
   };
 
@@ -183,22 +204,32 @@ export function QueryInput() {
               </button>
 
               {showModelDropdown && (
-                <div className="absolute bottom-full mb-2 right-0 w-48 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden">
+                <div className="absolute bottom-full mb-2 right-0 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl overflow-hidden">
                   {models.map(model => (
                     <button
                       key={model.id}
                       type="button"
                       onClick={() => {
-                        setSelectedModel(model.id);
-                        setShowModelDropdown(false);
+                        if (model.available) {
+                          setSelectedModel(model.id);
+                          setShowModelDropdown(false);
+                        }
                       }}
+                      disabled={!model.available}
                       className={`w-full px-3 py-2 text-left text-sm flex items-center justify-between transition-colors
-                               ${selectedModel === model.id
-                                 ? 'bg-orange-500/10 text-orange-500'
-                                 : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
+                               ${!model.available
+                                 ? 'text-zinc-500 cursor-not-allowed opacity-50'
+                                 : selectedModel === model.id
+                                   ? 'bg-orange-500/10 text-orange-500'
+                                   : 'text-zinc-300 hover:bg-zinc-800 hover:text-white'}`}
                     >
-                      <span>{model.name}</span>
-                      {selectedModel === model.id && (
+                      <span className="flex items-center space-x-2">
+                        <span>{model.name}</span>
+                        {!model.available && (
+                          <span className="text-xs text-zinc-600">Coming Soon!</span>
+                        )}
+                      </span>
+                      {selectedModel === model.id && model.available && (
                         <svg className="ml-auto h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -268,6 +299,97 @@ export function QueryInput() {
         </div>
       </div>
     </form>
+
+    {/* Building Newspaper View */}
+    {isLoading && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in overflow-y-auto">
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm" />
+
+        <div className="relative w-full max-w-6xl max-h-[90vh] bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col shadow-2xl animate-slide-up my-8">
+          {/* Header */}
+          <div className="sticky top-0 bg-zinc-900 border-b border-zinc-800 p-6 z-10">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-white">Building Your Newspaper...</h2>
+                <p className="text-sm text-zinc-400 mt-1">{loadingStatus}</p>
+              </div>
+              <div className="w-10 h-10 border-4 border-orange-500/20 border-t-orange-500 rounded-full animate-spin" />
+            </div>
+          </div>
+
+          {/* Two Column Layout */}
+          <div className="flex-1 overflow-hidden flex flex-col lg:flex-row">
+            {/* Left: AI Summary */}
+            <div className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-zinc-800 overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <span className="px-3 py-1 text-xs bg-orange-500/20 text-orange-400 rounded-full font-medium">
+                    AI Summary
+                  </span>
+                  {buildingSummary ? (
+                    <span className="text-xs text-green-500">✓ Complete</span>
+                  ) : (
+                    <span className="text-xs text-zinc-500">Waiting...</span>
+                  )}
+                </div>
+
+                {buildingSummary ? (
+                  <div className="prose prose-invert prose-sm max-w-none text-zinc-300 text-sm leading-relaxed">
+                    {buildingSummary.substring(0, 500)}...
+                  </div>
+                ) : (
+                  <div className="text-zinc-500 text-sm italic">
+                    AI summary will appear here once articles are collected...
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right: Source Articles */}
+            <div className="w-full lg:w-1/2 overflow-y-auto bg-zinc-900/50">
+              <div className="p-6">
+                <div className="flex items-center space-x-2 mb-6">
+                  <span className="px-3 py-1 text-xs bg-zinc-700 text-zinc-300 rounded-full font-medium">
+                    {buildingArticles.length} Articles Found
+                  </span>
+                </div>
+
+                <div className="space-y-4">
+                  {buildingArticles.map((article, index) => (
+                    <div key={index} className="bg-zinc-800/50 border border-zinc-800 rounded-lg p-4 animate-fade-in">
+                      <h4 className="text-base font-semibold text-white mb-2">
+                        {article.headline}
+                      </h4>
+                      <a
+                        href={article.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-orange-500 hover:text-orange-400 transition-colors inline-flex items-center space-x-1 mb-2"
+                      >
+                        <span className="truncate max-w-xs">View source</span>
+                        <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                      <p className="text-zinc-400 text-xs line-clamp-3">
+                        {article.summary}
+                      </p>
+                    </div>
+                  ))}
+
+                  {buildingArticles.length === 0 && (
+                    <div className="text-center text-zinc-500 text-sm italic py-8">
+                      Searching for articles...
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
 
     {createdNewspaperId && (
       <NewspaperDetail
