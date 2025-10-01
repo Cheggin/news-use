@@ -20,13 +20,14 @@ if not api_key:
 
 genai.configure(api_key=api_key)
 
-def summarize_articles(articles: List[Article]) -> Dict:
+def summarize_articles(articles: List[Article], query: str = "") -> Dict:
     """
     Takes a list of Article objects and uses Google Gemini to summarize them
     and find more information based on its understanding.
 
     Args:
         articles: List of Article objects with 'headline', 'summary', and 'url' attributes
+        query: The user's search query to focus the analysis
 
     Returns:
         Dictionary with summary and additional insights
@@ -41,8 +42,10 @@ def summarize_articles(articles: List[Article]) -> Dict:
         article_text += f"URL: {article.url}\n"
         article_text += "-" * 50
 
+    query_context = f"The user searched for: '{query}'\n\n" if query else ""
+
     prompt = f"""
-    Based on these news articles, provide a comprehensive analysis in well-formatted markdown.
+    {query_context}Based on these news articles, provide a comprehensive analysis in well-formatted markdown.
 
     Structure your response with:
     1. A comprehensive summary that ties together all the articles
@@ -55,13 +58,14 @@ def summarize_articles(articles: List[Article]) -> Dict:
 
     IMPORTANT FORMATTING REQUIREMENTS:
     - Use proper markdown formatting with ## for main sections and ### for subsections
-    - Add TWO line breaks between paragraphs (use \\n\\n)
-    - Add TWO line breaks after headings
-    - Use **bold** for emphasis on key terms
+    - Add blank lines between paragraphs for spacing
+    - Add blank lines after headings
+    - Use **bold** for emphasis on key terms ONLY related to the search topic
     - Use bullet points (-) or numbered lists where appropriate
     - Ensure readability with clear spacing and structure
+    - Reference specific articles using (Article 1), (Article 2), etc when discussing their content
 
-    Give me a thorough analysis with additional insights beyond what's in the articles.
+    Give me a thorough analysis with additional insights beyond what's in the articles, focusing on the search topic.
     """
 
     try:

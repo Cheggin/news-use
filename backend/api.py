@@ -57,14 +57,18 @@ async def search_washpost_endpoint(search: SearchQuery, api_key: str = Security(
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(executor, search_washpost, search.query)
 
+class SummarizeRequest(BaseModel):
+    query: str
+    articles: List[Article]
+
 @app.post("/summarize")
-async def summarize_endpoint(articles: Articles, api_key: str = Security(verify_api_key)):
+async def summarize_endpoint(request: SummarizeRequest, api_key: str = Security(verify_api_key)):
     """
     Summarize a list of articles using Google Gemini.
-    Takes a list of articles and returns a comprehensive summary with additional context.
+    Takes a list of articles and the user's query, returns a comprehensive summary with additional context.
     """
     loop = asyncio.get_event_loop()
-    result = await loop.run_in_executor(executor, summarize_articles, articles.articles)
+    result = await loop.run_in_executor(executor, summarize_articles, request.articles, request.query)
     return result
 
 @app.get("/health")
