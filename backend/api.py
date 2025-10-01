@@ -1,7 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Security
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import List
+import os
 from news_scrapers.nyt import search_nyt
 from news_scrapers.washpost import search_washpost
 from news_scrapers.models import Articles, Article
@@ -14,29 +16,42 @@ app = FastAPI(
 )
 
 # Configure CORS
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,https://www.news-use.dev,https://vercel.com/sso/access/request?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252Fnews-use-git-main-cheggins-projects.vercel.app%252F%26nonce%3Dbad972c2ba15434f6dde20c249ae9a15e5ab84a8a64d8585ec8e994cc77950f0&url=news-use-git-main-cheggins-projects.vercel.app").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with specific origins
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# API Key Security
+API_KEY = os.getenv("API_KEY")
+if not API_KEY:
+    raise ValueError("API_KEY environment variable must be set")
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=True)
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return api_key
+
 class SearchQuery(BaseModel):
     query: str
 
 @app.post("/search/nyt", response_model=Articles)
-async def search_nyt_endpoint(search: SearchQuery):
+async def search_nyt_endpoint(search: SearchQuery, api_key: str = Security(verify_api_key)):
     """Search New York Times for articles related to the query"""
     return search_nyt(search.query)
 
 @app.post("/search/washpost", response_model=Articles)
-async def search_washpost_endpoint(search: SearchQuery):
+async def search_washpost_endpoint(search: SearchQuery, api_key: str = Security(verify_api_key)):
     """Search Washington Post for articles related to the query"""
     return search_washpost(search.query)
 
 @app.post("/summarize")
-async def summarize_endpoint(articles: Articles):
+async def summarize_endpoint(articles: Articles, api_key: str = Security(verify_api_key)):
     """
     Summarize a list of articles using Google Gemini.
     Takes a list of articles and returns a comprehensive summary with additional context.
