@@ -3,6 +3,7 @@ import { useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { NewspaperDetail } from "./NewspaperDetail";
+import { searchNYT, searchWashPost, summarizeArticles, type Article } from "../lib/api";
 
 type ModelOption = "gemini-flash-3.0" | "gpt-4.1" | "gemini-flash-2.5";
 
@@ -18,7 +19,7 @@ export function QueryInput() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isFocused, setIsFocused] = useState(false);
   const [includeInDatabase, setIncludeInDatabase] = useState(true);
-  const [showNameInput, setShowNameInput] = useState(false);
+  const [showNameInput, setShowNameInput] = useState(true);
   const [userName, setUserName] = useState("");
   const [selectedModel, setSelectedModel] = useState<ModelOption>("gemini-flash-3.0");
   const [showModelDropdown, setShowModelDropdown] = useState(false);
@@ -40,50 +41,79 @@ export function QueryInput() {
     }
   }, [showModelDropdown]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
 
     setIsLoading(true);
 
-    // For demo purposes, create a mock newspaper
-    const mockArticles = {
-      article1: {
-        link: `https://example.com/${Date.now()}-1`,
-        content: `Breaking news about ${query}. This is a comprehensive analysis of the latest developments in this area, providing in-depth coverage and expert insights into the matter at hand.`
-      },
-      article2: {
-        link: `https://example.com/${Date.now()}-2`,
-        content: `Latest updates on ${query}. Industry experts weigh in on the implications and future outlook, offering valuable perspectives on this evolving situation.`
-      },
-      article3: {
-        link: `https://example.com/${Date.now()}-3`,
-        content: `In-depth analysis: ${query}. A thorough examination of the key factors, stakeholders, and potential outcomes related to this important topic.`
+    try {
+      // Call both news APIs in parallel
+      const [nytResponse, washPostResponse] = await Promise.all([
+        searchNYT(query),
+        searchWashPost(query)
+      ]);
+
+      // Combine all articles
+      const allArticles: Article[] = [
+        ...nytResponse.articles,
+        ...washPostResponse.articles
+      ];
+
+      if (allArticles.length === 0) {
+        alert("No articles found. Please try a different query.");
+        setIsLoading(false);
+        return;
       }
-    };
 
-    const headlines = [
-      `Breaking: Major developments in ${query}`,
-      `Expert analysis on ${query} trends`,
-      `What you need to know about ${query}`
-    ];
+      // Summarize all articles
+      const summaryResponse = await summarizeArticles(allArticles);
 
-    createNewspaper({
-      query: query,
-      newspapers: mockArticles,
-      articleCount: 3,
-      headlines: headlines,
-      userName: showNameInput && userName.trim() ? userName.trim() : undefined,
-      isPublic: includeInDatabase
-    }).then((newspaperId) => {
+      if (!summaryResponse.success) {
+        throw new Error(summaryResponse.error || "Failed to summarize articles");
+      }
+
+      // Format the articles into the newspaper structure
+      const newspapers: Record<string, { link: string; content: string; headline?: string }> = {};
+      const headlines: string[] = [];
+
+      // Add the AI summary as the FIRST item with a clear headline
+      newspapers["0_summary"] = {
+        link: "",
+        content: summaryResponse.summary,
+        headline: `Comprehensive Analysis: ${query}`
+      };
+      headlines.push(`Comprehensive Analysis: ${query}`);
+
+      // Then add individual articles
+      allArticles.forEach((article, index) => {
+        newspapers[`article${index + 1}`] = {
+          link: article.url,
+          content: article.summary,
+          headline: article.headline
+        };
+        headlines.push(article.headline);
+      });
+
+      // Create newspaper in Convex
+      const newspaperId = await createNewspaper({
+        query: query,
+        newspapers: newspapers,
+        articleCount: allArticles.length,
+        headlines: headlines,
+        userName: showNameInput && userName.trim() ? userName.trim() : undefined,
+        isPublic: includeInDatabase
+      });
+
       setQuery("");
       setUserName("");
-      setIsLoading(false);
       setCreatedNewspaperId(newspaperId);
-    }).catch((error) => {
+    } catch (error) {
       console.error("Failed to create newspaper:", error);
+      alert(`Error: ${error instanceof Error ? error.message : "Failed to fetch articles"}`);
+    } finally {
       setIsLoading(false);
-    });
+    }
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
