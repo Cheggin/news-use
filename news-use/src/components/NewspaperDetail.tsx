@@ -86,42 +86,39 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
     // Split into sections
     const sections: { title: string; content: string; key: string }[] = [];
 
-    // Try to identify major sections
-    const comprehensiveMatch = formatted.match(/1\.\s*Comprehensive Summary[^]*?(?=2\.|3\.|4\.|$)/i);
-    const contextMatch = formatted.match(/2\.\s*Additional Context[^]*?(?=3\.|4\.|$)/i);
-    const meaningMatch = formatted.match(/3\.\s*What These Stories Mean[^]*?(?=4\.|$)/i);
-    const relatedMatch = formatted.match(/4\.\s*Related Information[^]*/i);
+    // Try to identify major sections with more flexible patterns
+    // Look for ## headings or numbered sections
+    const headerPattern = /(?:^|\n)(?:##\s*(.+?)|(\d+)\.\s*(.+?))\n/g;
+    const matches = [...formatted.matchAll(headerPattern)];
 
-    if (comprehensiveMatch) {
-      sections.push({
-        title: "Comprehensive Summary",
-        content: comprehensiveMatch[0].replace(/^1\.\s*Comprehensive Summary[^\n]*\n*/i, ''),
-        key: "comprehensive"
-      });
-    }
+    if (matches.length > 0) {
+      // Parse sections based on headers found
+      for (let i = 0; i < matches.length; i++) {
+        const match = matches[i];
+        const title = match[1] || match[3]; // Either ## heading or numbered title
+        const startIdx = match.index! + match[0].length;
+        const endIdx = i < matches.length - 1 ? matches[i + 1].index! : formatted.length;
+        const content = formatted.slice(startIdx, endIdx).trim();
 
-    if (contextMatch) {
-      sections.push({
-        title: "Additional Context & Background",
-        content: contextMatch[0].replace(/^2\.\s*Additional Context[^\n]*\n*/i, ''),
-        key: "context"
-      });
-    }
+        // Determine section key based on title content
+        let key = "other";
+        const lowerTitle = title.toLowerCase();
+        if (lowerTitle.includes("summary") || lowerTitle.includes("comprehensive")) {
+          key = "comprehensive";
+        } else if (lowerTitle.includes("context") || lowerTitle.includes("background")) {
+          key = "context";
+        } else if (lowerTitle.includes("mean") || lowerTitle.includes("matter") || lowerTitle.includes("why")) {
+          key = "meaning";
+        } else if (lowerTitle.includes("related") || lowerTitle.includes("bigger") || lowerTitle.includes("picture")) {
+          key = "related";
+        }
 
-    if (meaningMatch) {
-      sections.push({
-        title: "What These Stories Mean & Why They Matter",
-        content: meaningMatch[0].replace(/^3\.\s*What These Stories Mean[^\n]*\n*/i, ''),
-        key: "meaning"
-      });
-    }
-
-    if (relatedMatch) {
-      sections.push({
-        title: "Related Information & Bigger Picture",
-        content: relatedMatch[0].replace(/^4\.\s*Related Information[^\n]*\n*/i, ''),
-        key: "related"
-      });
+        sections.push({
+          title: title.trim(),
+          content: content,
+          key: key
+        });
+      }
     }
 
     // If no sections found, return the whole content as one section
