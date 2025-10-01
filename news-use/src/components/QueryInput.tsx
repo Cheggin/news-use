@@ -66,10 +66,19 @@ export function QueryInput() {
       setLoadingStatus("Searching Washington Post...");
 
       // Then call WashPost, add to existing articles
-      const washPostResponse = await searchWashPost({ query });
+      let washPostArticles: Article[] = [];
+      try {
+        const washPostResponse = await searchWashPost({ query });
+        washPostArticles = washPostResponse.articles;
+      } catch (error) {
+        console.error("Washington Post search failed:", error);
+        setLoadingStatus("Washington Post search timed out, continuing with NYT results...");
+        // Continue with just NYT articles if WashPost fails
+      }
+
       const allArticles: Article[] = [
         ...nytResponse.articles,
-        ...washPostResponse.articles
+        ...washPostArticles
       ];
       setBuildingArticles(allArticles);
 

@@ -30,7 +30,6 @@ export const searchNYT = action({
         "X-API-Key": apiKey,
       },
       body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(300000), // 5 minute timeout
     });
 
     if (!response.ok) {
@@ -48,21 +47,27 @@ export const searchWashPost = action({
     const apiKey = process.env.API_KEY!;
     const apiUrl = process.env.FASTAPI_URL!;
 
-    const response = await fetch(`${apiUrl}/search/washpost`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-API-Key": apiKey,
-      },
-      body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(300000), // 5 minute timeout
-    });
+    try {
+      const response = await fetch(`${apiUrl}/search/washpost`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-API-Key": apiKey,
+        },
+        body: JSON.stringify({ query }),
+      });
 
-    if (!response.ok) {
-      throw new Error(`Washington Post search failed: ${response.statusText}`);
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "Unknown error");
+        console.error(`WashPost API error (${response.status}): ${errorText}`);
+        throw new Error(`Washington Post search failed: ${response.status} ${errorText}`);
+      }
+
+      return (await response.json()) as ArticlesResponse;
+    } catch (error) {
+      console.error("WashPost search error:", error);
+      throw error;
     }
-
-    return (await response.json()) as ArticlesResponse;
   },
 });
 
@@ -89,7 +94,6 @@ export const summarizeArticles = action({
         "X-API-Key": apiKey,
       },
       body: JSON.stringify({ query, articles }),
-      signal: AbortSignal.timeout(300000), // 5 minute timeout
     });
 
     if (!response.ok) {
