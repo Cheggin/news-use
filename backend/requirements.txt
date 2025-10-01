@@ -1,0 +1,4 @@
+dotenv
+pydantic
+browser_use_sdk
+fastapi
