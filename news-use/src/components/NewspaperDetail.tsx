@@ -52,7 +52,7 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
   // Parse and format the summary content
   const parseSummary = (content: string) => {
     // Add double line breaks between paragraphs and sections
-    let formatted = content
+    const formatted = content
       // First, normalize any existing line breaks
       .replace(/\r\n/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
@@ -159,7 +159,7 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
     }
 
     if (Array.isArray(children)) {
-      return children.map((child, i) => processChildren(child));
+      return children.map((child) => processChildren(child));
     }
 
     // Handle React elements (like <strong>, <em>, etc.)

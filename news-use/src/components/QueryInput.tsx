@@ -152,7 +152,7 @@ export function QueryInput() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="w-full max-w-4xl mx-auto mb-16">
+      <form onSubmit={(e) => void handleSubmit(e)} className="w-full max-w-4xl mx-auto mb-16">
       <div className="space-y-4">
         <div
           ref={inputRef}
@@ -165,7 +165,7 @@ export function QueryInput() {
             onKeyDown={(e) => {
               if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && !isLoading && query.trim()) {
                 e.preventDefault();
-                handleSubmit(e as any);
+                void handleSubmit(e as any);
               }
             }}
             onFocus={() => setIsFocused(true)}
@@ -267,10 +267,9 @@ export function QueryInput() {
             <button
               type="button"
               onClick={() => {
-                setIncludeInDatabase(!includeInDatabase)
-                setShowNameInput(includeInDatabase ? false : true)
-              }
-            }
+                setIncludeInDatabase(!includeInDatabase);
+                setShowNameInput(includeInDatabase ? false : true);
+              }}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
                 includeInDatabase ? 'bg-orange-500' : 'bg-zinc-700'
               }`}
