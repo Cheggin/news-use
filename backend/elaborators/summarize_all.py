@@ -42,8 +42,9 @@ def summarize_articles(articles: List[Article]) -> Dict:
         article_text += "-" * 50
 
     prompt = f"""
-    Based on these news articles, provide:
+    Based on these news articles, provide a comprehensive analysis in well-formatted markdown.
 
+    Structure your response with:
     1. A comprehensive summary that ties together all the articles
     2. Additional context and background information you know about these topics
     3. What these stories mean and why they matter
@@ -51,6 +52,14 @@ def summarize_articles(articles: List[Article]) -> Dict:
 
     Articles:
     {article_text}
+
+    IMPORTANT FORMATTING REQUIREMENTS:
+    - Use proper markdown formatting with ## for main sections and ### for subsections
+    - Add TWO line breaks between paragraphs (use \\n\\n)
+    - Add TWO line breaks after headings
+    - Use **bold** for emphasis on key terms
+    - Use bullet points (-) or numbered lists where appropriate
+    - Ensure readability with clear spacing and structure
 
     Give me a thorough analysis with additional insights beyond what's in the articles.
     """
