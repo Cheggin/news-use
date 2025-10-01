@@ -207,10 +207,10 @@ export function QueryInput() {
               type="button"
               onClick={() => {
                 setIncludeInDatabase(!includeInDatabase)
-                setShowNameInput(!showNameInput)
+                setShowNameInput(includeInDatabase ? false : true)
               }
             }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:ring-offset-zinc-900 ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none ${
                 includeInDatabase ? 'bg-orange-500' : 'bg-zinc-700'
               }`}
             >
@@ -230,7 +230,7 @@ export function QueryInput() {
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="Enter your name"
-              className="w-48 px-3 py-1.5 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500
+              className="w-48 px-3 py-0 h-6 bg-zinc-800 border border-zinc-700 rounded-lg text-white placeholder-zinc-500
                        focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500/20
                        transition-all duration-200 text-sm"
             />
