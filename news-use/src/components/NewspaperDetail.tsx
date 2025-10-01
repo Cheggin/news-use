@@ -92,6 +92,18 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
     const matches = [...formatted.matchAll(headerPattern)];
 
     if (matches.length > 0) {
+      // Check for content before the first header - this might be the summary
+      if (matches[0].index! > 0) {
+        const preContent = formatted.slice(0, matches[0].index!).trim();
+        if (preContent.length > 50) { // Only add if it's substantial content
+          sections.push({
+            title: "Comprehensive Summary",
+            content: preContent,
+            key: "comprehensive"
+          });
+        }
+      }
+
       // Parse sections based on headers found
       for (let i = 0; i < matches.length; i++) {
         const match = matches[i];

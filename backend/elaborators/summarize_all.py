@@ -47,22 +47,29 @@ def summarize_articles(articles: List[Article], query: str = "") -> Dict:
     prompt = f"""
     {query_context}Based on these news articles, provide a comprehensive analysis in well-formatted markdown.
 
-    Structure your response with:
-    1. A comprehensive summary that ties together all the articles
-    2. Additional context and background information you know about these topics
-    3. What these stories mean and why they matter
-    4. Related information that helps understand the bigger picture
+    Structure your response with these EXACT section headers:
+
+    ## 1. Comprehensive Summary
+    [Tie together all the articles into a cohesive narrative]
+
+    ## 2. Additional Context & Background
+    [Background information you know about these topics]
+
+    ## 3. What These Stories Mean & Why They Matter
+    [Explain the significance and implications]
+
+    ## 4. Related Information & Bigger Picture
+    [Help understand the broader context]
 
     Articles:
     {article_text}
 
     IMPORTANT FORMATTING REQUIREMENTS:
-    - Use proper markdown formatting with ## for main sections and ### for subsections
+    - Use the EXACT section headers shown above with ## markdown formatting
     - Add blank lines between paragraphs for spacing
     - Add blank lines after headings
     - Use **bold** for emphasis on key terms ONLY related to the search topic
     - Use bullet points (-) or numbered lists where appropriate
-    - Ensure readability with clear spacing and structure
     - Reference specific articles using (Article 1), (Article 2), etc when discussing their content
 
     Give me a thorough analysis with additional insights beyond what's in the articles, focusing on the search topic.
