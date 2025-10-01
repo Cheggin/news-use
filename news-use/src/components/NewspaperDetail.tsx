@@ -53,6 +53,11 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
   const parseSummary = (content: string) => {
     // Add double line breaks between paragraphs and sections
     const formatted = content
+      // Clean up literal \n\n and extra backslashes
+      .replace(/\\n\\n/g, '\n\n')
+      .replace(/\\n/g, '\n')
+      // Remove standalone backslashes with whitespace around them
+      .replace(/\s*\\\s*/g, ' ')
       // First, normalize any existing line breaks
       .replace(/\r\n/g, '\n')
       .replace(/\n{3,}/g, '\n\n')
@@ -260,15 +265,15 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
                                             prose-headings:text-white prose-headings:font-bold
                                             prose-h3:text-base prose-h3:mt-6 prose-h3:mb-3
                                             prose-h4:text-sm prose-h4:mt-5 prose-h4:mb-2
-                                            prose-p:text-zinc-300 prose-p:my-5 prose-p:leading-7
-                                            prose-ul:text-zinc-300 prose-ul:my-5 prose-ul:space-y-2
-                                            prose-ol:text-zinc-300 prose-ol:my-5 prose-ol:space-y-2
+                                            prose-p:text-zinc-300 prose-p:my-3 prose-p:leading-7
+                                            prose-ul:text-zinc-300 prose-ul:my-3 prose-ul:space-y-2
+                                            prose-ol:text-zinc-300 prose-ol:my-3 prose-ol:space-y-2
                                             prose-li:text-zinc-300 prose-li:leading-7 prose-li:my-1
                                             prose-strong:text-white prose-strong:font-semibold
                                             prose-em:text-zinc-200
-                                            prose-blockquote:my-5 prose-blockquote:border-l-orange-500
+                                            prose-blockquote:my-3 prose-blockquote:border-l-orange-500
                                             prose-a:text-orange-500 prose-a:no-underline hover:prose-a:text-orange-400
-                                            [&>*]:mb-5 [&>*:last-child]:mb-0">
+                                            [&>*]:mb-3 [&>*:last-child]:mb-0">
                                 <ReactMarkdown components={markdownComponents}>{section.content}</ReactMarkdown>
                               </div>
                             </div>
