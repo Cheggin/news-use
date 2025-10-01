@@ -4,6 +4,8 @@ from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from typing import List
 import os
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 from news_scrapers.nyt import search_nyt
 from news_scrapers.washpost import search_washpost
 from news_scrapers.models import Articles, Article
@@ -37,18 +39,23 @@ async def verify_api_key(api_key: str = Security(api_key_header)):
         raise HTTPException(status_code=403, detail="Invalid API key")
     return api_key
 
+# Thread pool for running blocking scraper functions
+executor = ThreadPoolExecutor(max_workers=3)
+
 class SearchQuery(BaseModel):
     query: str
 
 @app.post("/search/nyt", response_model=Articles)
 async def search_nyt_endpoint(search: SearchQuery, api_key: str = Security(verify_api_key)):
     """Search New York Times for articles related to the query"""
-    return search_nyt(search.query)
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, search_nyt, search.query)
 
 @app.post("/search/washpost", response_model=Articles)
 async def search_washpost_endpoint(search: SearchQuery, api_key: str = Security(verify_api_key)):
     """Search Washington Post for articles related to the query"""
-    return search_washpost(search.query)
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(executor, search_washpost, search.query)
 
 @app.post("/summarize")
 async def summarize_endpoint(articles: Articles, api_key: str = Security(verify_api_key)):
@@ -56,7 +63,8 @@ async def summarize_endpoint(articles: Articles, api_key: str = Security(verify_
     Summarize a list of articles using Google Gemini.
     Takes a list of articles and returns a comprehensive summary with additional context.
     """
-    result = summarize_articles(articles.articles)
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(executor, summarize_articles, articles.articles)
     return result
 
 @app.get("/health")
