@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
 import { NewspaperDetail } from "./NewspaperDetail";
-import { searchNYT, searchWashPost, summarizeArticles, type Article } from "../lib/api";
+import { type Article } from "../lib/api";
 
 type ModelOption = "gemini-flash-latest" | "gpt-4.1" | "gemini-flash-2.5";
 
@@ -31,6 +31,11 @@ export function QueryInput() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const createNewspaper = useMutation(api.newspapers.createNewspaper);
 
+  // Convex actions for secure API calls
+  const searchNYT = useAction(api.fastapi.searchNYT);
+  const searchWashPost = useAction(api.fastapi.searchWashPost);
+  const summarizeArticles = useAction(api.fastapi.summarizeArticles);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -55,13 +60,13 @@ export function QueryInput() {
 
     try {
       // Call NYT first, show results immediately
-      const nytResponse = await searchNYT(query);
+      const nytResponse = await searchNYT({ query });
       setBuildingArticles([...nytResponse.articles]);
 
       setLoadingStatus("Searching Washington Post...");
 
       // Then call WashPost, add to existing articles
-      const washPostResponse = await searchWashPost(query);
+      const washPostResponse = await searchWashPost({ query });
       const allArticles: Article[] = [
         ...nytResponse.articles,
         ...washPostResponse.articles
@@ -79,11 +84,10 @@ export function QueryInput() {
       setLoadingStatus(`Analyzing ${allArticles.length} articles with AI...`);
 
       // Summarize all articles
-      const summaryResponse = await summarizeArticles(allArticles);
-
-      if (!summaryResponse.success) {
-        throw new Error(summaryResponse.error || "Failed to summarize articles");
-      }
+      const summaryResponse = await summarizeArticles({
+        query,
+        articles: allArticles
+      });
 
       // Show the summary as it's generated
       setBuildingSummary(summaryResponse.summary);

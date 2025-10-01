@@ -3,7 +3,12 @@
     "allow": [
       "Bash(npm run lint)",
       "Bash(python:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npx convex env set FASTAPI_URL \"https://news-use.onrender.com\")",
+      "Bash(npx convex env set:*)",
+      "Bash(npx convex dev:*)",
+      "Bash(npx convex deploy:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

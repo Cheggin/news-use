@@ -13,6 +13,7 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as fastapi from "../fastapi.js";
 import type * as newspapers from "../newspapers.js";
 
 /**
@@ -24,6 +25,7 @@ import type * as newspapers from "../newspapers.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  fastapi: typeof fastapi;
   newspapers: typeof newspapers;
 }>;
 export declare const api: FilterApi<
