@@ -83,64 +83,39 @@ export function NewspaperDetail({ newspaperId, onClose }: NewspaperDetailProps) 
         return punctuation + '\n\n' + nextWord;
       });
 
-    // Split into sections
+    // Always return exactly 4 sections
     const sections: { title: string; content: string; key: string }[] = [];
 
-    // Try to identify major sections with more flexible patterns
-    // Look for ## headings or numbered sections
-    const headerPattern = /(?:^|\n)(?:##\s*(.+?)|(\d+)\.\s*(.+?))\n/g;
-    const matches = [...formatted.matchAll(headerPattern)];
+    // Look for the 4 main sections with ## headers
+    const section1Match = formatted.match(/##\s*1\.?\s*Comprehensive Summary([\s\S]*?)(?=##\s*2\.?|$)/i);
+    const section2Match = formatted.match(/##\s*2\.?\s*Additional Context[^]*?([\s\S]*?)(?=##\s*3\.?|$)/i);
+    const section3Match = formatted.match(/##\s*3\.?\s*What These Stories Mean[^]*?([\s\S]*?)(?=##\s*4\.?|$)/i);
+    const section4Match = formatted.match(/##\s*4\.?\s*Related Information[^]*?([\s\S]*?)$/i);
 
-    if (matches.length > 0) {
-      // Check for content before the first header - this might be the summary
-      if (matches[0].index! > 0) {
-        const preContent = formatted.slice(0, matches[0].index!).trim();
-        if (preContent.length > 50) { // Only add if it's substantial content
-          sections.push({
-            title: "Comprehensive Summary",
-            content: preContent,
-            key: "comprehensive"
-          });
-        }
-      }
+    // Always add all 4 sections, using placeholder text if not found
+    sections.push({
+      title: "Comprehensive Summary",
+      content: section1Match ? section1Match[1].trim() : formatted,
+      key: "comprehensive"
+    });
 
-      // Parse sections based on headers found
-      for (let i = 0; i < matches.length; i++) {
-        const match = matches[i];
-        const title = match[1] || match[3]; // Either ## heading or numbered title
-        const startIdx = match.index! + match[0].length;
-        const endIdx = i < matches.length - 1 ? matches[i + 1].index! : formatted.length;
-        const content = formatted.slice(startIdx, endIdx).trim();
+    sections.push({
+      title: "Additional Context & Background",
+      content: section2Match ? section2Match[1].trim() : "No additional context available.",
+      key: "context"
+    });
 
-        // Determine section key based on title content
-        let key = "other";
-        const lowerTitle = title.toLowerCase();
-        if (lowerTitle.includes("summary") || lowerTitle.includes("comprehensive")) {
-          key = "comprehensive";
-        } else if (lowerTitle.includes("context") || lowerTitle.includes("background")) {
-          key = "context";
-        } else if (lowerTitle.includes("mean") || lowerTitle.includes("matter") || lowerTitle.includes("why")) {
-          key = "meaning";
-        } else if (lowerTitle.includes("related") || lowerTitle.includes("bigger") || lowerTitle.includes("picture")) {
-          key = "related";
-        }
+    sections.push({
+      title: "What These Stories Mean & Why They Matter",
+      content: section3Match ? section3Match[1].trim() : "Analysis not available.",
+      key: "meaning"
+    });
 
-        sections.push({
-          title: title.trim(),
-          content: content,
-          key: key
-        });
-      }
-    }
-
-    // If no sections found, return the whole content as one section
-    if (sections.length === 0) {
-      sections.push({
-        title: "Analysis",
-        content: formatted,
-        key: "comprehensive"
-      });
-    }
+    sections.push({
+      title: "Related Information & Bigger Picture",
+      content: section4Match ? section4Match[1].trim() : "No related information available.",
+      key: "related"
+    });
 
     return sections;
   };
