@@ -30,6 +30,7 @@ export const searchNYT = action({
         "X-API-Key": apiKey,
       },
       body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(300000), // 5 minute timeout
     });
 
     if (!response.ok) {
@@ -54,6 +55,7 @@ export const searchWashPost = action({
         "X-API-Key": apiKey,
       },
       body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(300000), // 5 minute timeout
     });
 
     if (!response.ok) {
@@ -87,6 +89,7 @@ export const summarizeArticles = action({
         "X-API-Key": apiKey,
       },
       body: JSON.stringify({ query, articles }),
+      signal: AbortSignal.timeout(300000), // 5 minute timeout
     });
 
     if (!response.ok) {
