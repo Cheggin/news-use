@@ -269,7 +269,7 @@ app.add_middleware(
 ## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite, Tailwind CSS v4
-- **Backend**: Convex, FastAPI 
+- **Backend**: Convex, FastAPI, Render
 - **AI**: Google Gemini Flash (summarization)
 - **Scraping**: Browser Use SDK (automated browsing)
 
