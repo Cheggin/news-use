@@ -13,7 +13,6 @@
 - [Quick Start](#quick-start)
 - [Project Structure](#project-structure)
 - [Development](#development)
-- [Features](#features)
 - [Customization](#customization)
 - [API Endpoints](#api-endpoints)
 - [Environment Variables](#environment-variables)
@@ -117,24 +116,6 @@ Access Convex Dashboard to view/edit data:
 cd news-use
 npx convex dashboard
 ```
-
-## Features
-
-### News Scraping
-- **Browser Use SDK** - Automated scraping of NYT and Washington Post
-- **Parallel Execution** - Scrape multiple sources simultaneously
-- **Real-time Updates** - See articles populate as they're found
-
-### AI Summarization
-- **Google Gemini** - Comprehensive article analysis
-- **Context Generation** - Additional background information
-- **Cross-Reference** - Link related articles together
-
-### Newspaper Management
-- **Convex Real-time DB** - Instant sync across devices
-- **Public/Private** - Share newspapers or keep them private
-- **Global Feed** - Browse newspapers from other users
-
 ## Customization
 
 ### Add New News Sources
